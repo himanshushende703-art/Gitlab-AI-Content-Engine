@@ -122,12 +122,14 @@ def signup(payload: SignupRequest, db: Session = Depends(get_db)):
     """
     try:
         role = Role(payload.role)
+        print(f"Signup request for role: {role}")
     except ValueError:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid role '{payload.role}'. Must be one of: {', '.join(r.value for r in Role)}",
         )
     user = accounts.signup(db, payload.email, payload.password, role)
+    print(f"User created: {user.email}, Role: {user.role}")
     log_event("account_created", created_by=user.email, role=user.role)
     return SignupResponse(message="Verification code sent to your email", email=user.email)
 
