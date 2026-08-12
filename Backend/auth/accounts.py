@@ -155,7 +155,7 @@ def verify_code(db: Session, email: str, code: str) -> str:
 
 def _send_reset_email(user_email: str, token: str):
     # 1. Build the correct frontend URL
-    reset_link = f"http://localhost:3000/reset-password?token={token}"
+    reset_link = f"https://gitlab-ai-content-engine.vercel.app/reset-password?token={token}"
     
     # 2. Format the email
     msg = EmailMessage()

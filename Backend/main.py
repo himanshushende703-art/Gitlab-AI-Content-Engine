@@ -86,7 +86,7 @@ context_builder = ContextBuilder()
 # Local development ke liye default localhost hi rahega agar env var set na ho.
 frontend_origins = os.getenv(
     "FRONTEND_ORIGINS",
-    "http://localhost:3000,http://127.0.0.1:3000",
+    "https://gitlab-ai-content-engine.vercel.app",
 ).split(",")
 
 app.add_middleware(
