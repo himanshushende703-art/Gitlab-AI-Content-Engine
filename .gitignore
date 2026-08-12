@@ -1,0 +1,13 @@
+venv/
+node_modules/
+.env
+.env.local
+__pycache__/
+.next/
+*.pyc
+
+# Logs
+Backend/audit.log
+
+# Chroma Database
+Backend/chroma_data/
