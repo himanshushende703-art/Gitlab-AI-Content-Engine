@@ -22,18 +22,29 @@ After verify/login, the frontend gets back an opaque session token
 that token as `Authorization: Bearer <token>`, and `get_current_user`
 below looks it up to find who's making the request and what role they
 have.
+
+PASSWORD RESET EMAIL:
+    Sent via Brevo's HTTPS API (not raw SMTP) because outbound SMTP
+    ports (587/465) are blocked on many hosts, including Render's
+    free/starter tiers. Requires these env vars:
+        BREVO_API_KEY       - from https://app.brevo.com (SMTP & API -> API Keys)
+        BREVO_SENDER_EMAIL  - an email address verified as a sender in Brevo
+        FRONTEND_URL        - e.g. https://your-app.vercel.app
+                               (defaults to http://localhost:3000 for local dev)
 """
 
 import hashlib
 import os
 import re
 import secrets
+import sib_api_v3_sdk
+from sib_api_v3_sdk.rest import ApiException
 from datetime import datetime, timedelta
 
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
-from auth.email_utils import send_verification_code, send_reset_email
+from auth.email_utils import send_verification_code
 from auth.roles import CurrentUser, Role
 from database.db import get_db
 from database.models_db import SessionTokenDB, UserDB, VerificationCodeDB, PasswordResetDB
@@ -42,6 +53,10 @@ PBKDF2_ITERATIONS = 260_000
 CODE_TTL_MINUTES = 15
 RESET_TOKEN_TTL_MINUTES = 15
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 
 def _hash(value: str, salt: str) -> str:
@@ -61,13 +76,13 @@ def _verify_password(password: str, salt: str, expected_hash: str) -> bool:
 
 def signup(db: Session, email: str, password: str, role: Role) -> UserDB:
     email = email.strip().lower()
-    
+
     # 1. Basic Validation
     if not EMAIL_RE.match(email):
         raise HTTPException(status_code=400, detail="Enter a valid email address")
     if len(password) < 6:
         raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
-    
+
     # 2. Check if user already exists
     user = db.get(UserDB, email)
     password_hash, salt = _hash_password(password)
@@ -82,7 +97,7 @@ def signup(db: Session, email: str, password: str, role: Role) -> UserDB:
             user.password_salt = salt
             user.role = role.value
             db.commit()
-            
+
             _issue_code(db, email)
             return user
 
@@ -152,21 +167,35 @@ def verify_code(db: Session, email: str, code: str) -> str:
 
     return _create_session(db, email)
 
+
 def _send_reset_email(user_email: str, token: str):
-    # Build the reset link using the deployed frontend's URL — falls back
-    # to localhost for local development. Set FRONTEND_URL in Render's
-    # Environment tab to your real Vercel URL for production links, e.g.
-    #   FRONTEND_URL=https://gitlab-ai-project-almabetter.vercel.app
-    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
-    reset_link = f"{frontend_url}/reset-password?token={token}"
+    # 1. Build the correct frontend URL (from env var — works locally AND in prod)
+    reset_link = f"{FRONTEND_URL}/reset-password?token={token}"
+
+    # 2. If Brevo isn't configured, fall back to logging (dev mode)
+    if not (BREVO_API_KEY and BREVO_SENDER_EMAIL):
+        print(f"[DEV EMAIL] Reset link for {user_email}: {reset_link}")
+        return
+
+    # 3. Send via Brevo's HTTPS API (raw SMTP ports are blocked on Render)
+    configuration = sib_api_v3_sdk.Configuration()
+    configuration.api_key['api-key'] = BREVO_API_KEY
+    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
+        sib_api_v3_sdk.ApiClient(configuration)
+    )
+
+    send_email = sib_api_v3_sdk.SendSmtpEmail(
+        to=[{"email": user_email}],
+        sender={"email": BREVO_SENDER_EMAIL},
+        subject="Reset Your Password",
+        text_content=f"Please click this link to reset your password:\n\n{reset_link}",
+    )
 
     try:
-        send_reset_email(user_email, reset_link)
-    except Exception as exc:
-        # Don't crash the request if the email provider has a hiccup —
-        # the reset token is already saved, so the user can still be
-        # helped (e.g. resupplied the code) without a 500 here.
-        print(f"FAILED to send reset email: {exc}")
+        api_instance.send_transac_email(send_email)
+        print(f"SUCCESS: Reset email sent to {user_email}")
+    except ApiException as e:
+        print(f"FAILED to send email: {e}")
 
 
 def forgot_password(db: Session, email: str):
@@ -197,6 +226,7 @@ def forgot_password(db: Session, email: str):
     return {
         "message": "Password reset link generated"
     }
+
 
 def reset_password(
     db: Session,
