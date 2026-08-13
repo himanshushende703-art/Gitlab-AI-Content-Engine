@@ -44,7 +44,7 @@ def get_llm() -> LLM:
     Using Gemini's free tier is a good default for a student project.
     """
     return LLM(
-        model="gemini/gemini-flash-latest",
+        model="gemini/gemini-3.5-flash-lite",
         api_key=os.getenv("GEMINI_API_KEY"),
         temperature=0.4,
     )
