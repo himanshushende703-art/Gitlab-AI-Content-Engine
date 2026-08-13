@@ -67,11 +67,23 @@ def ingest_folder(folder_name: str, category: str) -> int:
     return len(documents)
 
 
-def main():
+def ingest_all() -> int:
+    """
+    Ingests every knowledge folder and returns the total chunk count.
+    Used both by the CLI entrypoint below (`python -m retrieval.ingest_knowledge`)
+    and by main.py's startup hook, so the knowledge base gets rebuilt
+    automatically every time the app starts — important on hosts like
+    Render's free tier where local disk doesn't persist across restarts.
+    """
     total = 0
     total += ingest_folder("style_guides", "style_guide")
     total += ingest_folder("sample_docs", "sample_doc")
     total += ingest_folder("content_templates", "content_template")
+    return total
+
+
+def main():
+    total = ingest_all()
 
     print(f"Ingested {total} chunks into the Chroma knowledge base.")
     if total == 0:
