@@ -1,10 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
-import {
-  useSearchParams,
-  useRouter,
-} from "next/navigation";
+import { useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 import {
@@ -21,24 +18,20 @@ import {
 } from "react-icons/fi";
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE ||
-  "http://127.0.0.1:8000";
+  process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
 
-function ResetPasswordForm() {
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   // Token received from:
-  // /reset-password?token=xxxxx
+  // http://localhost:3000/reset-password?token=xxxxx
   const token = searchParams.get("token");
 
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const [showPassword, setShowPassword] =
-    useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState(false);
 
@@ -91,19 +84,12 @@ function ResetPasswordForm() {
         }
       );
 
-      let data = {};
-
-      try {
-        data = await res.json();
-      } catch {
-        data = {};
-      }
+      const data = await res.json();
 
       if (!res.ok) {
         setError(
-          typeof data.detail === "string"
-            ? data.detail
-            : "Unable to reset password. Please try again."
+          data.detail ||
+            "Unable to reset password. Please try again."
         );
         return;
       }
@@ -116,11 +102,6 @@ function ResetPasswordForm() {
         router.push("/login");
       }, 1500);
     } catch (err) {
-      console.error(
-        "Reset password error:",
-        err
-      );
-
       setError(
         "Could not reach the server. Please make sure the backend is running."
       );
@@ -131,11 +112,13 @@ function ResetPasswordForm() {
 
   return (
     <div className="min-h-screen flex bg-gray-50">
+
       {/* =====================================================
           LEFT SIDE
       ====================================================== */}
 
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-orange-600 via-orange-600 to-orange-700 text-white">
+
         {/* Decorative Circles */}
 
         <div className="absolute -top-32 -left-32 w-96 h-96 bg-white/10 rounded-full" />
@@ -147,6 +130,7 @@ function ResetPasswordForm() {
         {/* Content */}
 
         <div className="relative z-10 flex flex-col justify-center px-16 xl:px-24 max-w-3xl">
+
           {/* Logo */}
 
           <Link
@@ -177,6 +161,7 @@ function ResetPasswordForm() {
           <h1 className="text-5xl xl:text-6xl font-bold leading-tight mt-7">
             Reset Your
             <br />
+
             <span className="text-orange-100">
               Password
             </span>
@@ -186,13 +171,14 @@ function ResetPasswordForm() {
 
           <p className="mt-7 text-lg text-orange-100 leading-8 max-w-xl">
             Create a new password and securely regain
-            access to your GitLab AI Content &
-            Documentation Engine account.
+            access to your GitLab AI Content & Documentation
+            Engine account.
           </p>
 
           {/* Features */}
 
           <div className="mt-10 space-y-5">
+
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center">
                 <FiLock />
@@ -222,11 +208,13 @@ function ResetPasswordForm() {
                 Continue securely after reset
               </span>
             </div>
+
           </div>
 
           <p className="mt-12 text-sm text-orange-200">
             Your account security matters to us.
           </p>
+
         </div>
       </div>
 
@@ -235,10 +223,13 @@ function ResetPasswordForm() {
       ====================================================== */}
 
       <div className="w-full lg:w-1/2 min-h-screen flex items-center justify-center px-5 py-10 bg-gradient-to-br from-gray-50 to-orange-50">
+
         <div className="w-full max-w-md">
+
           {/* Mobile Logo */}
 
           <div className="lg:hidden flex justify-center mb-8">
+
             <Link
               href="/"
               className="flex items-center gap-2"
@@ -257,14 +248,17 @@ function ResetPasswordForm() {
                 </span>
               </span>
             </Link>
+
           </div>
 
           {/* Reset Password Card */}
 
           <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/60 border border-gray-100 p-8 sm:p-10">
+
             {/* Header */}
 
             <div className="text-center">
+
               <div className="mx-auto w-14 h-14 bg-orange-100 text-orange-600 rounded-2xl flex items-center justify-center">
                 <FiLock size={26} />
               </div>
@@ -277,6 +271,7 @@ function ResetPasswordForm() {
                 Enter your new password below to secure
                 your account.
               </p>
+
             </div>
 
             {/* Form */}
@@ -285,9 +280,11 @@ function ResetPasswordForm() {
               onSubmit={handleSubmit}
               className="mt-8 space-y-5"
             >
+
               {/* New Password */}
 
               <div>
+
                 <label
                   htmlFor="password"
                   className="block mb-2 text-sm font-semibold text-gray-700"
@@ -296,6 +293,7 @@ function ResetPasswordForm() {
                 </label>
 
                 <div className="relative">
+
                   <FiLock
                     className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
                     size={19}
@@ -324,9 +322,7 @@ function ResetPasswordForm() {
                   <button
                     type="button"
                     onClick={() =>
-                      setShowPassword(
-                        !showPassword
-                      )
+                      setShowPassword(!showPassword)
                     }
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-orange-600 transition"
                     aria-label={
@@ -341,16 +337,19 @@ function ResetPasswordForm() {
                       <FiEye size={20} />
                     )}
                   </button>
+
                 </div>
 
                 <p className="mt-2 text-xs text-gray-400">
                   Use at least 6 characters.
                 </p>
+
               </div>
 
               {/* Confirm Password */}
 
               <div>
+
                 <label
                   htmlFor="confirmPassword"
                   className="block mb-2 text-sm font-semibold text-gray-700"
@@ -359,6 +358,7 @@ function ResetPasswordForm() {
                 </label>
 
                 <div className="relative">
+
                   <FiLock
                     className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
                     size={19}
@@ -374,9 +374,7 @@ function ResetPasswordForm() {
                     placeholder="Confirm your password"
                     value={confirmPassword}
                     onChange={(e) => {
-                      setConfirmPassword(
-                        e.target.value
-                      );
+                      setConfirmPassword(e.target.value);
                       setError("");
                       setMessage("");
                     }}
@@ -406,19 +404,23 @@ function ResetPasswordForm() {
                       <FiEye size={20} />
                     )}
                   </button>
+
                 </div>
+
               </div>
 
               {/* Error */}
 
               {error && (
                 <div className="flex items-start gap-3 p-3.5 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+
                   <FiAlertCircle
                     className="mt-0.5 flex-shrink-0"
                     size={18}
                   />
 
                   <span>{error}</span>
+
                 </div>
               )}
 
@@ -426,12 +428,14 @@ function ResetPasswordForm() {
 
               {message && (
                 <div className="flex items-start gap-3 p-3.5 bg-green-50 border border-green-200 text-green-700 rounded-xl text-sm">
+
                   <FiCheckCircle
                     className="mt-0.5 flex-shrink-0"
                     size={18}
                   />
 
                   <span>{message}</span>
+
                 </div>
               )}
 
@@ -442,6 +446,7 @@ function ResetPasswordForm() {
                 disabled={loading}
                 className="group w-full bg-orange-600 hover:bg-orange-700 disabled:opacity-60 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-semibold flex items-center justify-center gap-3 shadow-lg shadow-orange-200 transition-all duration-300 hover:-translate-y-0.5"
               >
+
                 {loading ? (
                   <>
                     <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
@@ -457,7 +462,9 @@ function ResetPasswordForm() {
                     />
                   </>
                 )}
+
               </button>
+
             </form>
 
             {/* Back to Login */}
@@ -479,6 +486,7 @@ function ResetPasswordForm() {
               <FiHome size={16} />
               Back to Home
             </Link>
+
           </div>
 
           {/* Footer */}
@@ -486,35 +494,19 @@ function ResetPasswordForm() {
           <p className="text-center text-xs text-gray-400 mt-6">
             © 2026 GitLab. All rights reserved.
           </p>
+
         </div>
+
       </div>
+
     </div>
   );
 }
 
-/*
- * IMPORTANT:
- * useSearchParams() is inside ResetPasswordForm.
- * The form is wrapped with Suspense so Next.js can
- * successfully prerender the /reset-password route.
- */
-
 export default function ResetPasswordPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-orange-50">
-          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-10 text-center">
-            <div className="mx-auto w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin" />
-
-            <p className="mt-5 text-gray-600 font-medium">
-              Loading...
-            </p>
-          </div>
-        </div>
-      }
-    >
-      <ResetPasswordForm />
+    <Suspense fallback={null}>
+      <ResetPasswordContent />
     </Suspense>
   );
 }

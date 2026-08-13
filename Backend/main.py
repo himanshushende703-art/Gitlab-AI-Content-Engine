@@ -31,7 +31,15 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from agents.crew import run_content_workflow
+# NOTE: `agents.crew` (CrewAI) is imported lazily, inside
+# run_agent_workflow() below, instead of here at module level.
+# CrewAI + crewai-tools pull in a very large dependency tree (LangChain,
+# etc.), and importing it at startup means every single instance —
+# even one just checking login/job-status — pays that memory cost.
+# On Render's free tier (512MB), that was pushing memory usage high
+# enough to trigger repeated "Instance failed" OOM restarts (visible in
+# the Events timeline). Loading it only when the workflow actually runs
+# keeps idle memory much lower.
 from auth import accounts
 from auth.accounts import get_current_user, require_role
 from auth.roles import CurrentUser, Role
@@ -86,7 +94,7 @@ context_builder = ContextBuilder()
 # Local development ke liye default localhost hi rahega agar env var set na ho.
 frontend_origins = os.getenv(
     "FRONTEND_ORIGINS",
-    "https://gitlab-ai-content-engine.vercel.app",
+    "http://localhost:3000,http://127.0.0.1:3000",
 ).split(",")
 
 app.add_middleware(
@@ -102,6 +110,26 @@ app.add_middleware(
 def on_startup():
     # Creates tables in your Supabase database if they don't exist yet.
     init_db()
+
+    # UPDATED FOR DEPLOYMENT (Render free tier):
+    # Render's free tier uses an ephemeral disk — anything written to
+    # local disk (like backend/chroma_data/) is wiped every time the
+    # service restarts or redeploys. Without this, the Chroma knowledge
+    # base would stay empty after every deploy, causing "No Source
+    # Material Found" / "0 Sources" in the Context Preview screen even
+    # though the data/ folder itself is fine.
+    # Running the ingest here means the knowledge base is rebuilt from
+    # the data/ folder automatically on every startup, so it's always
+    # populated without needing a paid persistent disk.
+    try:
+        from retrieval.ingest_knowledge import ingest_all
+        count = ingest_all()
+        print(f"[STARTUP] Knowledge base ingested: {count} chunks loaded.")
+    except Exception as exc:
+        # Don't let a knowledge-base hiccup prevent the whole app from
+        # starting — the workflow still runs fine without it, just
+        # without the extra style-guide/sample-doc grounding.
+        print(f"[STARTUP] Knowledge base ingest failed: {exc}")
 
 
 @app.get("/")
@@ -122,14 +150,12 @@ def signup(payload: SignupRequest, db: Session = Depends(get_db)):
     """
     try:
         role = Role(payload.role)
-        print(f"Signup request for role: {role}")
     except ValueError:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid role '{payload.role}'. Must be one of: {', '.join(r.value for r in Role)}",
         )
     user = accounts.signup(db, payload.email, payload.password, role)
-    print(f"User created: {user.email}, Role: {user.role}")
     log_event("account_created", created_by=user.email, role=user.role)
     return SignupResponse(message="Verification code sent to your email", email=user.email)
 
@@ -377,6 +403,12 @@ def run_agent_workflow(
 
     crud.update_job(db, job_id, status="drafting")
     log_event("agent_workflow_started", job_id=job_id, started_by=user.name)
+
+    # Lazy import: only pulls in crewai/crewai-tools (heavy) at the
+    # moment the workflow actually runs, not at app startup. See the
+    # note next to the top-level imports for why this matters on
+    # Render's free 512MB tier.
+    from agents.crew import run_content_workflow
 
     try:
        
