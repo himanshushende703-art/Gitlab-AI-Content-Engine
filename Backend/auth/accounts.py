@@ -25,16 +25,15 @@ have.
 """
 
 import hashlib
+import os
 import re
 import secrets
-import smtplib
-from email.message import EmailMessage
 from datetime import datetime, timedelta
 
 from fastapi import Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 
-from auth.email_utils import send_verification_code
+from auth.email_utils import send_verification_code, send_reset_email
 from auth.roles import CurrentUser, Role
 from database.db import get_db
 from database.models_db import SessionTokenDB, UserDB, VerificationCodeDB, PasswordResetDB
@@ -154,25 +153,20 @@ def verify_code(db: Session, email: str, code: str) -> str:
     return _create_session(db, email)
 
 def _send_reset_email(user_email: str, token: str):
-    # 1. Build the correct frontend URL
-    reset_link = f"https://gitlab-ai-content-engine.vercel.app/reset-password?token={token}"
-    
-    # 2. Format the email
-    msg = EmailMessage()
-    msg['Subject'] = "Reset Your Password"
-    msg['From'] = "gitlabproject000@gmail.com"
-    msg['To'] = user_email
-    msg.set_content(f"Please click this link to reset your password:\n\n{reset_link}")
-    
-    # 3. Send the email
+    # Build the reset link using the deployed frontend's URL — falls back
+    # to localhost for local development. Set FRONTEND_URL in Render's
+    # Environment tab to your real Vercel URL for production links, e.g.
+    #   FRONTEND_URL=https://gitlab-ai-project-almabetter.vercel.app
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
+    reset_link = f"{frontend_url}/reset-password?token={token}"
+
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls() # Secure the connection
-            server.login("gitlabproject000@gmail.com", "oorq vntu berq duqc")
-            server.send_message(msg)
-        print(f"SUCCESS: Reset email sent to {user_email}")
-    except Exception as e:
-        print(f"FAILED to send email: {e}")
+        send_reset_email(user_email, reset_link)
+    except Exception as exc:
+        # Don't crash the request if the email provider has a hiccup —
+        # the reset token is already saved, so the user can still be
+        # helped (e.g. resupplied the code) without a 500 here.
+        print(f"FAILED to send reset email: {exc}")
 
 
 def forgot_password(db: Session, email: str):
