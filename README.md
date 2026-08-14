@@ -492,19 +492,28 @@ AI generation is not treated as the final publishing decision.
 ## Screenshots
 
 ### 1. Home / Product Overview
-<img width="1379" height="757" alt="2" src="https://github.com/user-attachments/assets/badae35c-eaae-42c5-bcaf-09f9fa1d6701" />
+<img width="1884" height="859" alt="Screenshot 2026-08-13 212948" src="https://github.com/user-attachments/assets/6ba59e7b-1375-4e0d-bd94-c99ca14ec92e" />
+
 
 ### 2. Application Dashboard
-<img width="2047" height="1163" alt="4" src="https://github.com/user-attachments/assets/9f2ee44f-9e5b-4692-99a9-36e9aba1bc3b" />
+<img width="1892" height="855" alt="Screenshot 2026-08-13 211325" src="https://github.com/user-attachments/assets/6d517171-c1b8-4ae7-8ad1-3e74e69e60b0" />
+<img width="1889" height="861" alt="Screenshot 2026-08-13 211300" src="https://github.com/user-attachments/assets/c2ed9442-b00a-4224-9a34-0d39839f7c74" />
+
 
 ### 3. Generate Documentation
-<img width="1291" height="769" alt="5" src="https://github.com/user-attachments/assets/762e0b17-7fe6-4fe4-a80a-433948cc0e9b" />
+<img width="1890" height="858" alt="Screenshot 2026-08-13 211357" src="https://github.com/user-attachments/assets/5bcbf0e1-bbf1-42a9-b8fc-b798b45bcdae" />
+
 
 ### 4. Context Preview / Source Grounding
-<img width="1288" height="779" alt="6" src="https://github.com/user-attachments/assets/6c9f81c1-42f6-4b8b-b3b1-48662777a5b1" />
+<img width="1877" height="856" alt="Screenshot 2026-08-13 212118" src="https://github.com/user-attachments/assets/479ab098-2850-414b-a917-31eb631b04be" />
 
-### 5. Generated Documentation / Release Notes
-<img width="1280" height="756" alt="7" src="https://github.com/user-attachments/assets/971a3bd8-f1b9-405a-9e59-3dd895df4b57" />
+
+### 5. Generated Documentation / blogs
+<img width="1883" height="855" alt="Screenshot 2026-08-13 212303" src="https://github.com/user-attachments/assets/7f2398ce-dd28-4656-a732-1a5eee49948c" />
+<img width="1884" height="858" alt="Screenshot 2026-08-13 212410" src="https://github.com/user-attachments/assets/f0bef78c-c50c-44c3-961c-ad5fcd004f45" />
+
+
+
 
 ---
 
