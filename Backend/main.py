@@ -100,6 +100,7 @@ frontend_origins = os.getenv(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=frontend_origins,
+    allow_origin_regex=r"https://gitlab-ai-content-engine.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
